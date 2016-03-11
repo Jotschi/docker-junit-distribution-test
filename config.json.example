@@ -1,0 +1,5 @@
+{
+ "baseImageName": "hydra.sky:5000/dockersurefire",
+ "contextImageName": "hydra.sky:5000/testcontext2",
+ "dockerswarm": "tcp://nexus.sky:3376"
+}
