@@ -1,4 +1,4 @@
 #!/bin/bash
 
 export     GOPATH=$HOME/gocode
-go build src/swarmfireJVM.go
+go build src/swarmfire.go
