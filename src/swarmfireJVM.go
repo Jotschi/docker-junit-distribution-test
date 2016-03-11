@@ -24,6 +24,7 @@ const (
 func check(e error) {
   if e != nil {
      log.Fatal(e)
+     os.Exit(1)
   }
 }
 
@@ -89,19 +90,18 @@ func startingContainer(client *docker.Client, containerId string) {
   fmt.Println("Container executed " + containerId)
 }
 
-func createContainer(client *docker.Client, contextImageName string, fileData string) string {
+func createContainer(client *docker.Client, conf ClusterConfig, fileData string) string {
   fmt.Println("Execute...")
   envs := []string{"DATA=" + fileData}
   //var cmd2 = "/opt/java/latest/bin/java -jar " +
 
-  var cmd = []string{"/opt/java/latest/bin/java", "-jar"}
+  var cmd = conf.Command
   var cmd2 = append(cmd, os.Args[4:]...)
   fmt.Println(strings.Join(cmd2 , " "))
 
-  //cmd = []string{"find", "/home"}
-  conf := docker.Config{
+  dconf := docker.Config{
     Env:    envs,
-    Image:  contextImageName,
+    Image:  conf.ContextImageName,
     AttachStdin: false,
     AttachStdout: true,
     AttachStderr: true,
@@ -111,10 +111,9 @@ func createContainer(client *docker.Client, contextImageName string, fileData st
     Cmd:    cmd2,
   }
   opts := docker.CreateContainerOptions{
-//    Name:     "snapshot",
-    Config:   &conf,
+    Config:   &dconf,
   }
-  fmt.Println("Creating container from image " + contextImageName)
+  fmt.Println("Creating container from image " + conf.ContextImageName)
   container, err := client.CreateContainer(opts)
   check(err)
   fmt.Println("Container created..." + container.ID)
@@ -125,6 +124,7 @@ type ClusterConfig struct {
     BaseImageName   string
     ContextImageName string
     Dockerswarm string
+    Command []string
 }
 
 func readConfig() ClusterConfig {
@@ -141,8 +141,6 @@ func writeDockerfile(baseImageName string) {
   d1 = append(d1, "ARG BASEDIR\n"...)
   d1 = append(d1, "ENV DATA EMPTY\n"...)
   d1 = append(d1, "ADD .  ${BASEDIR}/\n"...)
-  //d1 = append(d1, "RUN find /home\n"...)
-  //d1 = append(d1, "ADD ./target ${BASEDIR}/target\n"...)
   d1 = append(d1, "ENTRYPOINT [\"/entrypoint.sh\"]\n"...)
   err := ioutil.WriteFile("target/Dockerfile", d1, 0644)
   check(err)
@@ -152,18 +150,19 @@ func pullImage(client *docker.Client, imageName string) {
   var buf bytes.Buffer
   opts := docker.PullImageOptions{
     Repository:     imageName,
-    //Registry:       "",
-    //Tag:            "latest",
     OutputStream: &buf,
   }
   fmt.Println("Pulling image " + imageName)
   err := client.PullImage(opts, docker.AuthConfiguration{})
   check(err)
-  //fmt.Println("Out: ", buf.String())
 }
 
 func buildTestContextImage(client *docker.Client, contextImageName string) {
   var buf bytes.Buffer
+
+  pwd, err := os.Getwd()
+  check(err)
+
   opts := docker.BuildImageOptions{
       Name:                contextImageName,
       NoCache:             true,
@@ -172,11 +171,11 @@ func buildTestContextImage(client *docker.Client, contextImageName string) {
       ForceRmTmpContainer: true,
       OutputStream:        &buf,
       ContextDir:          "target",
-      BuildArgs:           []docker.BuildArg{{Name: "BASEDIR", Value: "/home/jotschi/workspaces/docker/docker-junit-distribution-test/target"}},
+      BuildArgs:           []docker.BuildArg{{Name: "BASEDIR", Value: pwd + "/target"}},
     }
     fmt.Println("Building Image " + contextImageName)
-    err := client.BuildImage(opts)
-    check(err)
+    err2 := client.BuildImage(opts)
+    check(err2)
     fmt.Println("Build Output: ", buf.String())
 }
 
@@ -189,7 +188,6 @@ func pushTestContextImage(client *docker.Client, contextImageName string) {
   var buf bytes.Buffer
   opts := docker.PushImageOptions{
     Name:                 contextImageName,
-    //Registry:             "hydra.sky:5000"
     OutputStream:         &buf,
   }
   err := client.PushImage(opts, docker.AuthConfiguration{})
@@ -198,12 +196,12 @@ func pushTestContextImage(client *docker.Client, contextImageName string) {
 
 }
 
-func build(client *docker.Client, baseImageName string, contextImageName string) {
-  fmt.Println("Build...")
-  pullImage(client, baseImageName)
-  writeDockerfile(baseImageName)
-  buildTestContextImage(client, contextImageName)
-  pushTestContextImage(client, contextImageName)
+func build(client *docker.Client, conf ClusterConfig) {
+  fmt.Println("Building Context image...")
+  pullImage(client, conf.BaseImageName)
+  writeDockerfile(conf.BaseImageName)
+  buildTestContextImage(client, conf.ContextImageName)
+  pushTestContextImage(client, conf.ContextImageName)
 }
 
 func waitForContainer(client *docker.Client, containerId string) {
@@ -211,12 +209,11 @@ func waitForContainer(client *docker.Client, containerId string) {
   code, err := client.WaitContainer(containerId)
   check(err)
   fmt.Println("Container " + containerId + " terminated with code " + string(code))
-
 }
 
-func execute(client *docker.Client, contextImageName string) {
+func execute(client *docker.Client, conf ClusterConfig) {
   var data = createTar()
-  var containerId = createContainer(client, contextImageName, data)
+  var containerId = createContainer(client, conf, data)
   var outBuf bytes.Buffer
   var errBuf bytes.Buffer
 
@@ -279,12 +276,12 @@ func obtainLock(conf ClusterConfig) bool {
 
 func execTest(conf ClusterConfig) {
   client, _ := docker.NewClient(conf.Dockerswarm)
-  execute(client, conf.ContextImageName)
+  execute(client, conf)
 }
 
 func buildAndDistImage(conf ClusterConfig) {
   client, _ := docker.NewClient(conf.Dockerswarm)
-  build(client, conf.BaseImageName, conf.ContextImageName);
+  build(client, conf);
 }
 
 func main() {
