@@ -1,5 +1,7 @@
 {
- "baseImageName": "hydra.sky:5000/dockersurefire",
+ "baseImageName": "jotschi/swarmfire",
  "contextImageName": "hydra.sky:5000/testcontext2",
- "dockerswarm": "tcp://nexus.sky:3376"
+ "dockerswarm": "tcp://nexus.sky:3376",
+ "command": ["java", "-jar"]
+ 
 }
