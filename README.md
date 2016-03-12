@@ -16,7 +16,7 @@ Swarmfire will create new docker image (testcontext image) which includes all bu
 
 ## Base Image
 
-The testcontext image is based upon the (swarmfire base image](https://hub.docker.com/r/jotschi/swarmfire/)
+The testcontext image is based upon the [swarmfire base image](https://hub.docker.com/r/jotschi/swarmfire/)
 
 ## Commands
 
