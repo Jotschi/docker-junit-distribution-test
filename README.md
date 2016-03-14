@@ -1,5 +1,10 @@
 # swarmfire
 
+Maven surefire docker bridge
+
+[![Build Status](https://secure.travis-ci.org/jotschi/swarmfire.png)](http://travis-ci.org/jotschi/swarmfire)
+
+
 * TL,DR
    * Swarmfire is a small tool written in go which creates a bridge between the [maven-surefire-plugin](https://maven.apache.org/surefire/maven-surefire-plugin/) and [docker swarm](https://docs.docker.com/swarm/) in order to execute distributed junit tests across multiple hosts.
    * A new docker container is started which runs the JVM instead of forking a JVM on the host. This way junit tests can be distributed across multiple hosts.
