@@ -4,4 +4,4 @@ go:
 install:
   - go get github.com/fsouza/go-dockerclient
 
-#script: go build src/swarm.go
+script: go build src/swarmfire.go
