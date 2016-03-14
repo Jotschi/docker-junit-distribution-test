@@ -1,30 +1,30 @@
 package main
 
 import (
-    "bytes"
-    "fmt"
-    "flag"
-    "time"
-     b64 "encoding/base64"
-    "github.com/fsouza/go-dockerclient"
-    "log"
-    "archive/tar"
-    "io/ioutil"
-    "encoding/json"
-    "strings"
-    "os"
-    "syscall"
+  "bytes"
+  "fmt"
+  "flag"
+  "time"
+  b64 "encoding/base64"
+  "github.com/fsouza/go-dockerclient"
+  "log"
+  "archive/tar"
+  "io/ioutil"
+  "encoding/json"
+  "strings"
+  "os"
+  "syscall"
 )
 
 const (
-     LOCK_FILE = "target/.lock"
-     IMAGE_FILE = "target/.imagedone"
+  LOCK_FILE = "target/.lock"
+  IMAGE_FILE = "target/.imagedone"
 )
 
 func check(e error) {
   if e != nil {
-     log.Fatal(e)
-     os.Exit(1)
+    log.Fatal(e)
+    os.Exit(1)
   }
 }
 
@@ -34,25 +34,25 @@ func createTar() string {
   // Add some files to the archive.
   var files = os.Args[4:]
 
-	for _, file := range files {
+  for _, file := range files {
     dat, err := ioutil.ReadFile(file)
     check(err)
     //fmt.Print(string(dat))
-		hdr := &tar.Header{
-			Name: file,
-   		Mode: 0600,
-  		Size: int64(len(dat)),
-  	}
-  	if err := tw.WriteHeader(hdr); err != nil {
-     log.Fatalln(err)
-  	}
-  	if _, err := tw.Write([]byte(dat)); err != nil {
-  		log.Fatalln(err)
-  	}
+    hdr := &tar.Header{
+      Name: file,
+      Mode: 0600,
+      Size: int64(len(dat)),
+    }
+    if err := tw.WriteHeader(hdr); err != nil {
+      log.Fatalln(err)
+    }
+    if _, err := tw.Write([]byte(dat)); err != nil {
+      log.Fatalln(err)
+    }
   }
   // Make sure to check the error on Close.
   if err := tw.Close(); err != nil {
-  	log.Fatalln(err)
+    log.Fatalln(err)
   }
 
   sEnc := b64.StdEncoding.EncodeToString([]byte(buf.String()))
@@ -70,13 +70,13 @@ func removeContainer(client *docker.Client, containerId string) {
 
 func attachTo(client *docker.Client, containerId string, outBuf *bytes.Buffer, errBuf *bytes.Buffer) {
   opts := docker.AttachToContainerOptions{
-      Container: containerId,
-      OutputStream: outBuf,
-      ErrorStream: errBuf,
-      Stdout:       true,
-      //Logs:         true,
-      Stderr:       true,
-      Stream:       true,
+    Container: containerId,
+    OutputStream: outBuf,
+    ErrorStream: errBuf,
+    Stdout:       true,
+    //Logs:         true,
+    Stderr:       true,
+    Stream:       true,
   }
   fmt.Println("Attaching to container " + containerId)
   err := client.AttachToContainer(opts)
@@ -121,10 +121,10 @@ func createContainer(client *docker.Client, conf ClusterConfig, fileData string)
 }
 
 type ClusterConfig struct {
-    BaseImageName   string
-    ContextImageName string
-    Dockerswarm string
-    Command []string
+  BaseImageName   string
+  ContextImageName string
+  Dockerswarm string
+  Command []string
 }
 
 func readConfig() ClusterConfig {
@@ -164,19 +164,19 @@ func buildTestContextImage(client *docker.Client, contextImageName string) {
   check(err)
 
   opts := docker.BuildImageOptions{
-      Name:                contextImageName,
-      NoCache:             true,
-      //SuppressOutput:      true,
-      //RmTmpContainer:      true,
-      ForceRmTmpContainer: true,
-      OutputStream:        &buf,
-      ContextDir:          "target",
-      BuildArgs:           []docker.BuildArg{{Name: "BASEDIR", Value: pwd + "/target"}},
-    }
-    fmt.Println("Building Image " + contextImageName)
-    err2 := client.BuildImage(opts)
-    check(err2)
-    fmt.Println("Build Output: ", buf.String())
+    Name:                contextImageName,
+    NoCache:             true,
+    //SuppressOutput:      true,
+    //RmTmpContainer:      true,
+    ForceRmTmpContainer: true,
+    OutputStream:        &buf,
+    ContextDir:          "target",
+    BuildArgs:           []docker.BuildArg{{Name: "BASEDIR", Value: pwd + "/target"}},
+  }
+  fmt.Println("Building Image " + contextImageName)
+  err2 := client.BuildImage(opts)
+  check(err2)
+  fmt.Println("Build Output: ", buf.String())
 }
 
 func removeImage(client *docker.Client, imageName string) {
@@ -264,59 +264,55 @@ func obtainLock(conf ClusterConfig) bool {
   err = syscall.Flock(int(fd), syscall.LOCK_EX+syscall.LOCK_NB)
   if err != nil {
     return false
-  } else {
-    fmt.Println("Building image")
-    time.Sleep(10000 * time.Millisecond)
-    // Build & distribute image
-    buildAndDistImage(conf)
-    createImageDoneFile()
-    return true
+    } else {
+      fmt.Println("Building image")
+      // Build & distribute image
+      buildAndDistImage(conf)
+      createImageDoneFile()
+      return true
+    }
   }
-}
 
-func execTest(conf ClusterConfig) {
-  client, _ := docker.NewClient(conf.Dockerswarm)
-  execute(client, conf)
-}
+  func execTest(conf ClusterConfig) {
+    client, _ := docker.NewClient(conf.Dockerswarm)
+    execute(client, conf)
+  }
 
-func buildAndDistImage(conf ClusterConfig) {
-  client, _ := docker.NewClient(conf.Dockerswarm)
-  build(client, conf);
-}
+  func buildAndDistImage(conf ClusterConfig) {
+    client, _ := docker.NewClient(conf.Dockerswarm)
+    build(client, conf);
+  }
 
-func main() {
+  func main() {
     var conf = readConfig()
 
     var command string
     var jarFlag string
-    //flag.StringVar(&socketPath, "s", "/var/run/docker.sock", "unix socket to connect to")
     flag.StringVar(&jarFlag, "jar", "", "Surefire arguments")
     flag.StringVar(&command, "c", "help", "Command to be executed [help|run|build|tar|cleanup]")
     flag.Parse()
 
     switch command {
-      case "build":
-         buildAndDistImage(conf)
-         break
-      case "run":
-          // If the image has not been build build the image
-          // or wait until it has been build
-          if ! isImageDone() {
-            if hasLock() {
-              fmt.Println("Waiting for image build to complete...")
+    case "build":
+      buildAndDistImage(conf)
+      break
+    case "run":
+      // If the image has not been build build the image
+      // or wait until it has been build
+      if ! isImageDone() {
+        if hasLock() {
+          fmt.Println("Waiting for image build to complete...")
+          waitForImageDone()
+          } else {
+            if ! obtainLock(conf) {
               waitForImageDone()
-            } else {
-              if ! obtainLock(conf) {
-                waitForImageDone()
-              }
             }
           }
-          fmt.Println("Forking test...")
-          execTest(conf)
-         break
-      case "tar":
-        createTar()
+        }
+        fmt.Println("Forking test...")
+        execTest(conf)
+        break
       default:
         flag.PrintDefaults()
+      }
     }
-}
