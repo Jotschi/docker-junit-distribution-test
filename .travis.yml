@@ -1,0 +1,7 @@
+language: go
+go:
+  - 1.5
+install:
+  - go get github.com/fsouza/go-dockerclien
+
+#script: go build src/swarm.go
