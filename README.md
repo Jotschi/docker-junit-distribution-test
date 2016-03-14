@@ -1,19 +1,18 @@
 # swarmfire
 
-Maven surefire docker bridge
+Maven surefire docker swarm bridge
 
 [![Build Status](https://secure.travis-ci.org/Jotschi/swarmfire.png)](http://travis-ci.org/Jotschi/swarmfire)
 
-
 * TL,DR
-   * Swarmfire is a small tool written in go which creates a bridge between the [maven-surefire-plugin](https://maven.apache.org/surefire/maven-surefire-plugin/) and [docker swarm](https://docs.docker.com/swarm/) in order to execute distributed junit tests across multiple hosts.
-   * A new docker container is started which runs the JVM instead of forking a JVM on the host. This way junit tests can be distributed across multiple hosts.
+   Swarmfire is a small tool written in go which creates a bridge between the [maven-surefire-plugin](https://maven.apache.org/surefire/maven-surefire-plugin/) and [docker swarm](https://docs.docker.com/swarm/) in order to execute junit tests across multiple hosts.
+   Swarmfire will start a jvm test process within a new docker container for each junit test.
 
-It is possible to execute junit tests in a multithreaded fashion using the *forkcount* parameter. Additionally the JVM executable can also be specified.
+It is possible to execute junit tests in a multithreaded fashion using the *forkcount* parameter. Additionally the JVM executable can also be specified via the *jvm* parameter.
 Normally a new JVM will be forked if the reuseFork parameter is set to false and threadCount is set to 1.
 Instead of using the host JVM a docker container will be spawned which will execute the test. The swarmfire tool will spawn a new docker container and also apply a bit of magic.
 
-Swarmfire will create new docker image (testcontext image) which includes all build dependencies that are needed to execute the junit test. In order to add all the needed maven dependencies the initial maven build must be triggered using the ```-Dmaven.repo.local=target/.m2``` option. This way the .m2 local repository will be placed in your target folder and thus be included in the testcontext image.
+Swarmfire will create new docker image (testcontext image) which includes all build dependencies that are needed to execute the junit test. In order to add all the needed maven dependencies the initial maven build must be triggered using the ```-Dmaven.repo.local=target/.m2``` option. This way the .m2 local repository will be placed in your target folder and thus can be included in the testcontext image.
 
 ## Example Project
 
