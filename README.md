@@ -2,7 +2,7 @@
 
 Maven surefire docker bridge
 
-[![Build Status](https://secure.travis-ci.org/jotschi/swarmfire.png)](http://travis-ci.org/jotschi/swarmfire)
+[![Build Status](https://secure.travis-ci.org/Jotschi/swarmfire.png)](http://travis-ci.org/Jotschi/swarmfire)
 
 
 * TL,DR
