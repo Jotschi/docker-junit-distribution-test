@@ -16,8 +16,13 @@ Normally a new JVM will be forked if the reuseFork parameter is set to false and
 Instead of using the host JVM a docker container will be spawned which will execute the test. The swarmfire tool will spawn a new docker container and also apply a bit of magic.
 
 Swarmfire will create new docker image (testcontext image) which includes all build dependencies that are needed to execute the junit test.
+In order to add all the needed maven dependencies the initial maven build must be triggered using the *maven.repo.local* system property. 
 
-In order to add all the needed maven dependencies the initial maven build must be triggered using the ```-Dmaven.repo.local=target/.m2``` option. This way the .m2 local repository will be placed in your target folder and thus can be included in the testcontext image.
+Example:
+
+```mvn test -Dmaven.repo.local=target/.m2```
+
+This way the .m2 local repository will be placed in your target folder and thus can be included in the testcontext image.
 
 ## Example Project
 
