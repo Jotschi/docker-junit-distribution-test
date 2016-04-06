@@ -41,9 +41,9 @@ When ready a new docker container will be created and the test will be invoked w
 
 ### Configuration
 
-The *config.json*  file is used to configure the build and exec command.
+The *swarmfire-config.json*  file is used to configure the build and exec command.
 
-Example: *config.json.example*
+Example: *swarmfire-config.json.example*
 
 ```
 {

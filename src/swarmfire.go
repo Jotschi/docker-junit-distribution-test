@@ -129,7 +129,7 @@ type ClusterConfig struct {
 }
 
 func readConfig() ClusterConfig {
-  dat, err := ioutil.ReadFile("config.json")
+  dat, err := ioutil.ReadFile("swarmfire-config.json")
   check(err)
 
   res := ClusterConfig{}
@@ -189,15 +189,10 @@ func saveAndLoadContextImage(client *docker.Client, contextImageName string) {
   reader, writer := io.Pipe()
   errChan := make(chan error)
   go func() {
-    var buf bytes.Buffer
-    importOptions := docker.ImportImageOptions {
-      Repository: contextImageName,
-      Source: "-",
+    loadOptions := docker.LoadImageOptions {
       InputStream: reader,
-      OutputStream: &buf,
     }
-    errChan <- client.ImportImage(importOptions)
-    fmt.Println("Import Output: ", buf.String())
+    errChan <- client.LoadImage(loadOptions)
   }()
 
   // Import the image
