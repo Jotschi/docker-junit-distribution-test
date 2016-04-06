@@ -13,6 +13,8 @@ import (
   "encoding/json"
   "strings"
   "os"
+  "io"
+//  "bufio"
   "syscall"
 )
 
@@ -193,7 +195,36 @@ func pushTestContextImage(client *docker.Client, contextImageName string) {
   err := client.PushImage(opts, docker.AuthConfiguration{})
   check(err)
   fmt.Println("Push Image: ", buf.String())
+}
 
+func saveAndLoadContextImage(client *docker.Client, contextImageName string) {
+  //f, _ := os.Create("test.tgz")
+  //writer := bufio.NewWriter(f)
+  reader, writer := io.Pipe()
+  exportOptions := docker.ExportImageOptions {
+    Name: contextImageName,
+    OutputStream: writer,
+  }
+  err := client.ExportImage(exportOptions)
+  check(err)
+  //writer.Flush()
+  //f.Close()
+
+
+  // Import the image
+  var buf bytes.Buffer
+  importOptions := docker.ImportImageOptions {
+    Repository: contextImageName,
+    //Source: "http://192.168.99.102:3376/images/test222/get",
+    Source: "test.tgz",
+    //Source: "test123",
+    //Tag: "latest",
+    InputStream: reader,
+    OutputStream: &buf,
+  }
+  impErr := client.ImportImage(importOptions)
+  fmt.Println("Import Output: ", buf.String())
+  check(impErr)
 }
 
 func build(client *docker.Client, conf ClusterConfig) {
@@ -201,7 +232,7 @@ func build(client *docker.Client, conf ClusterConfig) {
   pullImage(client, conf.BaseImageName)
   writeDockerfile(conf.BaseImageName)
   buildTestContextImage(client, conf.ContextImageName)
-  pushTestContextImage(client, conf.ContextImageName)
+  saveAndLoadContextImage(client, conf.ContextImageName)
 }
 
 func waitForContainer(client *docker.Client, containerId string) {
@@ -293,6 +324,10 @@ func obtainLock(conf ClusterConfig) bool {
     flag.Parse()
 
     switch command {
+    case "test":
+      client, _ := docker.NewClient(conf.Dockerswarm)
+      saveAndLoadContextImage(client, "test123")
+      break
     case "build":
       buildAndDistImage(conf)
       break
