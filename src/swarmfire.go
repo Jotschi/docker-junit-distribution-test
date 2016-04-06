@@ -186,6 +186,7 @@ func removeImage(client *docker.Client, imageName string) {
   check(err)
 }
 
+/*
 func pushTestContextImage(client *docker.Client, contextImageName string) {
   var buf bytes.Buffer
   opts := docker.PushImageOptions{
@@ -196,7 +197,7 @@ func pushTestContextImage(client *docker.Client, contextImageName string) {
   check(err)
   fmt.Println("Push Image: ", buf.String())
 }
-
+*/
 func saveAndLoadContextImage(client *docker.Client, contextImageName string) {
   reader, writer := io.Pipe()
   errChan := make(chan error)
@@ -229,6 +230,7 @@ func build(client *docker.Client, conf ClusterConfig) {
   pullImage(client, conf.BaseImageName)
   writeDockerfile(conf.BaseImageName)
   buildTestContextImage(client, conf.ContextImageName)
+  // Distribute image within swarm
   saveAndLoadContextImage(client, conf.ContextImageName)
 }
 
@@ -311,6 +313,12 @@ func obtainLock(conf ClusterConfig) bool {
     build(client, conf);
   }
 
+  func clean(conf ClusterConfig) {
+    client, _ := docker.NewClient(conf.Dockerswarm)
+    err := client.RemoveImage(conf.ContextImageName)
+    check(err)
+  }
+
   func main() {
     var conf = readConfig()
 
@@ -321,12 +329,11 @@ func obtainLock(conf ClusterConfig) bool {
     flag.Parse()
 
     switch command {
-    case "test":
-      client, _ := docker.NewClient(conf.Dockerswarm)
-      saveAndLoadContextImage(client, "test123")
-      break
     case "build":
       buildAndDistImage(conf)
+      break
+    case "clean":
+      clean(conf)
       break
     case "run":
       // If the image has not been build build the image
