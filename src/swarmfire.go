@@ -198,33 +198,30 @@ func pushTestContextImage(client *docker.Client, contextImageName string) {
 }
 
 func saveAndLoadContextImage(client *docker.Client, contextImageName string) {
-  //f, _ := os.Create("test.tgz")
-  //writer := bufio.NewWriter(f)
   reader, writer := io.Pipe()
+  errChan := make(chan error)
+  go func() {
+    var buf bytes.Buffer
+    importOptions := docker.ImportImageOptions {
+      Repository: contextImageName,
+      Source: "-",
+      InputStream: reader,
+      OutputStream: &buf,
+    }
+    errChan <- client.ImportImage(importOptions)
+    fmt.Println("Import Output: ", buf.String())
+  }()
+
+  // Import the image
   exportOptions := docker.ExportImageOptions {
     Name: contextImageName,
     OutputStream: writer,
   }
   err := client.ExportImage(exportOptions)
   check(err)
-  //writer.Flush()
-  //f.Close()
-
-
-  // Import the image
-  var buf bytes.Buffer
-  importOptions := docker.ImportImageOptions {
-    Repository: contextImageName,
-    //Source: "http://192.168.99.102:3376/images/test222/get",
-    Source: "test.tgz",
-    //Source: "test123",
-    //Tag: "latest",
-    InputStream: reader,
-    OutputStream: &buf,
-  }
-  impErr := client.ImportImage(importOptions)
-  fmt.Println("Import Output: ", buf.String())
-  check(impErr)
+  writer.Close()
+  err = <-errChan
+  check(err)
 }
 
 func build(client *docker.Client, conf ClusterConfig) {
