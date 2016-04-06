@@ -14,7 +14,6 @@ import (
   "strings"
   "os"
   "io"
-//  "bufio"
   "syscall"
 )
 
@@ -186,18 +185,6 @@ func removeImage(client *docker.Client, imageName string) {
   check(err)
 }
 
-/*
-func pushTestContextImage(client *docker.Client, contextImageName string) {
-  var buf bytes.Buffer
-  opts := docker.PushImageOptions{
-    Name:                 contextImageName,
-    OutputStream:         &buf,
-  }
-  err := client.PushImage(opts, docker.AuthConfiguration{})
-  check(err)
-  fmt.Println("Push Image: ", buf.String())
-}
-*/
 func saveAndLoadContextImage(client *docker.Client, contextImageName string) {
   reader, writer := io.Pipe()
   errChan := make(chan error)
