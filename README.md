@@ -39,6 +39,10 @@ The testcontext image is based upon the [swarmfire base image](https://hub.docke
 This command will build the test context docker image and effectively stall the execution of all junit test until the image has been build.
 When ready a new docker container will be created and the test will be invoked within the container.
 
+```-c clean```
+
+This command will invoke the removal of the previously distributed test contextimage from the docker swarm.
+
 ### Configuration
 
 The *swarmfire-config.json*  file is used to configure the build and exec command.
