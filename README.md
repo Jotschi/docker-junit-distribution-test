@@ -66,5 +66,5 @@ Example: *swarmfire-config.json.example*
 ## Limitations / Issues
 
 * I have only tested swarmfire using junit other test providers may not work.
-* Currently no image cleanup is implemented. The test context images will remain on the docker hosts and the docker repository.
 * Only tested using maven surefire plugin 2.19.1
+* Multi module builds have not yes been tested.
